@@ -104,8 +104,7 @@
         <h1 class="hero-title">GGUF Fit Estimator</h1>
         <p class="lede">
           Load a Hugging Face GGUF repo, choose context size and quantization,
-          and see how the model footprint would fill VRAM first before spilling
-          into system RAM.
+          and see if you can load it on your system.
         </p>
       </div>
       <div class="field-grid">
