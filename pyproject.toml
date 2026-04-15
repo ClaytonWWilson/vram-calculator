@@ -1,0 +1,10 @@
+[project]
+name = "vram-calculator"
+version = "0.1.0"
+description = "TUI calculator for LLM VRAM/RAM requirements"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "huggingface-hub>=0.24.0",
+    "rich>=13.7.0",
+]
