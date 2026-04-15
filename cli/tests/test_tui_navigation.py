@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from llm_calculator import LLMCalculator, ModelConfig
+from cli.llm_calculator import LLMCalculator, ModelConfig
 
 
 class FakeTTY:
@@ -183,7 +183,7 @@ class TuiNavigationTests(unittest.TestCase):
             config_path = config_file.name
 
         try:
-            with patch("llm_calculator.hf_hub_download", return_value=config_path):
+            with patch("cli.llm_calculator.hf_hub_download", return_value=config_path):
                 model_config = self.calculator.fetch_model_config("Qwen/Qwen3.5-4B-Base")
         finally:
             os.unlink(config_path)
