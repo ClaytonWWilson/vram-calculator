@@ -309,12 +309,13 @@
     </section>
 
     <section class="notes panel">
-      <p class="eyebrow">Assumptions</p>
+      <p class="eyebrow">How it works</p>
       <p>
-        This is a first-pass estimate. It uses <code>params * bits / 8</code> for
-        model weights, the current KV-cache formula from the CLI, fills VRAM first,
-        and does not model allocator overhead, batching, runtime-specific buffers,
-        or engine-specific offload behavior.
+        This tool uses the provided huggingface repo and attempts to fetch the
+        base model of the GGUF. It pulls the required values from the
+        config.json of the base model and uses those to estimate the necessary
+        VRAM required for running the model. This is a rough estimate and does
+        not account for runtime overhead or batching.
       </p>
     </section>
 
