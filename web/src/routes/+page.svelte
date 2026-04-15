@@ -731,10 +731,6 @@
     font-size: 1.02rem;
   }
 
-  code {
-    font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
-  }
-
   @media (max-width: 899px) {
     .field-grid,
     .selector-grid,
