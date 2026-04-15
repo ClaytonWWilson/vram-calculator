@@ -1,16 +1,14 @@
-<script>
+<script lang="ts">
   import Formula from "$lib/Formula.svelte";
-  import {
-    calculateEstimate,
-    formatQuantizationLabel,
-  } from "$lib/calculator.js";
+  import { calculateEstimate, formatQuantizationLabel } from "$lib/calculator";
+  import type { ApiResponse, ModelResponse } from "./api/model/+server";
 
   let repoInput = "unsloth/Qwen3.5-4B-GGUF";
   let vramGb = 12;
   let ramGb = 64;
   let loading = false;
   let error = "";
-  let model = null;
+  let model: ModelResponse | null = null;
   let selectedContextIndex = 0;
   let selectedQuantizationIndex = 0;
 
@@ -60,13 +58,15 @@
         }),
       });
 
-      const payload = await response.json();
+      const payload: ApiResponse = await response.json();
 
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Unable to load model metadata.");
+      if (payload.success === false) {
+        throw new Error(
+          payload.error.message ?? "Unable to load model metadata.",
+        );
       }
 
-      model = payload;
+      model = payload.data;
       selectedContextIndex = 0;
       selectedQuantizationIndex = 0;
     } catch (requestError) {

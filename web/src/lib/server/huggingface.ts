@@ -1,12 +1,11 @@
 import { getAvailableContexts, sortQuantizations } from "$lib/calculator.js";
+import type { ModelInfo } from "../../types/huggingface";
 
 const HF_ORIGIN = "https://huggingface.co";
 const MAX_BASE_MODEL_DEPTH = 10;
 
-export function normalizeRepoInput(input) {
-  const value = String(input ?? "")
-    .trim()
-    .replace(/\/+$/, "");
+export function normalizeRepoInput(input: string) {
+  const value = input.trim().replace(/\/+$/, "");
 
   if (!value) {
     throw new Error("Enter a Hugging Face GGUF repo.");
@@ -57,7 +56,13 @@ async function requestJson(path, fetchImpl) {
   return response.json();
 }
 
-async function requestConfig(repo, fetchImpl) {
+async function requestConfig(
+  repo: string,
+  fetchImpl: (
+    input: URL | RequestInfo,
+    init?: RequestInit,
+  ) => Promise<Response>,
+) {
   const response = await fetchImpl(
     `${HF_ORIGIN}/${repo}/resolve/main/config.json`,
     {
@@ -134,9 +139,9 @@ function getBaseModels(modelInfo) {
   return [];
 }
 
-export async function resolveBaseModel(ggufRepo, fetchImpl) {
+export async function resolveBaseModel(ggufRepo: string, fetchImpl) {
   let currentRepo = normalizeRepoInput(ggufRepo);
-  let resolvedBaseModel = null;
+  let resolvedBaseModel: string | null = null;
   const visited = new Set();
 
   for (let depth = 0; depth < MAX_BASE_MODEL_DEPTH; depth += 1) {
@@ -170,7 +175,8 @@ export async function resolveBaseModel(ggufRepo, fetchImpl) {
   };
 }
 
-export function resolveTextConfig(configData) {
+export function flattenTextConfig(configData: any) {
+  //Text config data is inside a text_config key
   if (configData?.text_config && typeof configData.text_config === "object") {
     return {
       ...configData,
@@ -178,6 +184,7 @@ export function resolveTextConfig(configData) {
     };
   }
 
+  // Text config is at the top level.
   return configData;
 }
 
@@ -185,7 +192,7 @@ function getPositiveInt(value) {
   return Number.isInteger(value) && value > 0 ? value : null;
 }
 
-export function extractMaxContextLength(configData) {
+export function extractMaxContextLength(configData: any) {
   const candidateKeys = [
     "max_position_embeddings",
     "max_sequence_length",
@@ -322,11 +329,18 @@ export function parseQuantizationBits(filename) {
   return match ? Number(match[1]) : 0;
 }
 
-export async function fetchQuantizations(ggufRepo, fetchImpl) {
-  const modelInfo = await requestJson(
+export async function fetchQuantizations(
+  ggufRepo: string,
+  fetchImpl: (
+    input: URL | RequestInfo,
+    init?: RequestInit,
+  ) => Promise<Response>,
+) {
+  const modelInfo: ModelInfo = await requestJson(
     `/api/models/${normalizeRepoInput(ggufRepo)}`,
     fetchImpl,
   );
+
   const siblings = Array.isArray(modelInfo.siblings) ? modelInfo.siblings : [];
 
   const quantizations = siblings
@@ -343,26 +357,41 @@ export async function fetchQuantizations(ggufRepo, fetchImpl) {
   return sortQuantizations(quantizations);
 }
 
-export async function fetchModelPayload(baseModel, fetchImpl) {
-  const configData = resolveTextConfig(
-    await requestConfig(baseModel, fetchImpl),
+export async function fetchModelPayload(
+  baseModel: string,
+  fetchImpl: (
+    input: URL | RequestInfo,
+    init?: RequestInit,
+  ) => Promise<Response>,
+) {
+  const configData = await requestConfig(baseModel, fetchImpl);
+
+  const textConfig = flattenTextConfig(configData);
+  const numLayers = parseInt(
+    String(
+      textConfig.num_hidden_layers ??
+        textConfig.n_layer ??
+        textConfig.hidden_layers ??
+        32,
+    ),
   );
-  const numLayers =
-    configData.num_hidden_layers ??
-    configData.n_layer ??
-    configData.hidden_layers ??
-    32;
-  const numKvHeads =
-    configData.num_key_value_heads ??
-    configData.num_attention_heads ??
-    configData.n_head ??
-    32;
-  const headDim =
-    configData.head_dim ??
-    Math.floor(
-      (configData.hidden_size ?? configData.n_embd ?? 4_096) /
-        Math.max(numKvHeads, 1),
-    );
+  const numKvHeads = parseInt(
+    String(
+      configData.num_key_value_heads ??
+        configData.num_attention_heads ??
+        configData.n_head ??
+        32,
+    ),
+  );
+  const headDim = parseInt(
+    String(
+      configData.head_dim ??
+        Math.floor(
+          (configData.hidden_size ?? configData.n_embd ?? 4_096) /
+            Math.max(numKvHeads, 1),
+        ),
+    ),
+  );
   const maxContextLength = extractMaxContextLength(configData);
   const totalParamsBillions = calculateTotalParams(
     configData,
