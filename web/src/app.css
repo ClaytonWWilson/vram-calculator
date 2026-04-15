@@ -1,0 +1,44 @@
+:root {
+  --bg: #f4efe5;
+  --bg-strong: #efe4cf;
+  --panel: rgba(255, 251, 245, 0.86);
+  --panel-strong: rgba(255, 248, 237, 0.95);
+  --ink: #1f1f1c;
+  --muted: #645d55;
+  --line: rgba(67, 52, 29, 0.14);
+  --accent: #a44718;
+  --accent-soft: rgba(164, 71, 24, 0.12);
+  --good: #226442;
+  --warn: #8a2d16;
+  --shadow: 0 24px 80px rgba(80, 54, 25, 0.12);
+  font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(232, 163, 88, 0.25), transparent 34%),
+    radial-gradient(circle at top right, rgba(110, 145, 90, 0.18), transparent 26%),
+    linear-gradient(180deg, #fbf7ef 0%, var(--bg) 52%, #e9dcc7 100%);
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}

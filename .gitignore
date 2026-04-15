@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Node / SvelteKit
+web/node_modules/
+web/.svelte-kit/
+web/build/
+web/.vite/
+web/coverage/

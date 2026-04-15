@@ -1,0 +1,352 @@
+import { getAvailableContexts, sortQuantizations } from '$lib/calculator.js';
+
+const HF_ORIGIN = 'https://huggingface.co';
+const MAX_BASE_MODEL_DEPTH = 10;
+
+export function normalizeRepoInput(input) {
+  const value = String(input ?? '').trim().replace(/\/+$/, '');
+
+  if (!value) {
+    throw new Error('Enter a Hugging Face GGUF repo.');
+  }
+
+  if (value.includes('://')) {
+    let url;
+
+    try {
+      url = new URL(value);
+    } catch {
+      throw new Error('Enter a valid Hugging Face repo URL.');
+    }
+
+    if (!url.hostname.endsWith('huggingface.co')) {
+      throw new Error('Only Hugging Face model URLs are supported.');
+    }
+
+    const parts = url.pathname.split('/').filter(Boolean);
+
+    if (parts.length < 2) {
+      throw new Error('Expected a Hugging Face repo in owner/repo form.');
+    }
+
+    return `${parts[0]}/${parts[1]}`;
+  }
+
+  const parts = value.split('/').filter(Boolean);
+
+  if (parts.length !== 2) {
+    throw new Error('Expected a Hugging Face repo in owner/repo form.');
+  }
+
+  return `${parts[0]}/${parts[1]}`;
+}
+
+async function requestJson(path, fetchImpl) {
+  const response = await fetchImpl(`${HF_ORIGIN}${path}`, {
+    headers: {
+      accept: 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Hugging Face request failed (${response.status}).`);
+  }
+
+  return response.json();
+}
+
+async function requestConfig(repo, fetchImpl) {
+  const response = await fetchImpl(`${HF_ORIGIN}/${repo}/resolve/main/config.json`, {
+    headers: {
+      accept: 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Could not fetch config.json for ${repo}.`);
+  }
+
+  return response.json();
+}
+
+export function inferOwnerFromModel(modelName) {
+  const value = modelName.toLowerCase();
+
+  if (value.includes('llama')) {
+    return 'meta-llama';
+  }
+
+  if (value.includes('qwen')) {
+    return 'Qwen';
+  }
+
+  if (value.includes('mistral')) {
+    return 'mistralai';
+  }
+
+  if (value.includes('gemma')) {
+    return 'google';
+  }
+
+  if (value.includes('phi')) {
+    return 'microsoft';
+  }
+
+  if (value.includes('olmo')) {
+    return 'allenai';
+  }
+
+  return 'meta-llama';
+}
+
+export function inferBaseModel(repo) {
+  const [owner, name] = normalizeRepoInput(repo).split('/');
+  const baseRepo = name.replace(/-GGUF$/i, '');
+  const inferredOwner = new Set(['unsloth', 'bartowski', 'thebloke', 'maziyarpanahi']).has(
+    owner.toLowerCase()
+  )
+    ? inferOwnerFromModel(name)
+    : owner;
+
+  return `${inferredOwner}/${baseRepo}`;
+}
+
+function getBaseModels(modelInfo) {
+  const cardData = modelInfo.cardData ?? modelInfo.card_data;
+  const value = cardData?.base_model ?? cardData?.baseModel ?? [];
+
+  if (Array.isArray(value)) {
+    return value.filter((item) => typeof item === 'string' && item);
+  }
+
+  if (typeof value === 'string' && value) {
+    return [value];
+  }
+
+  return [];
+}
+
+export async function resolveBaseModel(ggufRepo, fetchImpl) {
+  let currentRepo = normalizeRepoInput(ggufRepo);
+  let resolvedBaseModel = null;
+  const visited = new Set();
+
+  for (let depth = 0; depth < MAX_BASE_MODEL_DEPTH; depth += 1) {
+    if (visited.has(currentRepo)) {
+      break;
+    }
+
+    visited.add(currentRepo);
+
+    let modelInfo;
+
+    try {
+      modelInfo = await requestJson(`/api/models/${currentRepo}`, fetchImpl);
+    } catch {
+      break;
+    }
+
+    const baseModels = getBaseModels(modelInfo);
+
+    if (!baseModels.length) {
+      break;
+    }
+
+    resolvedBaseModel = baseModels[0];
+    currentRepo = resolvedBaseModel;
+  }
+
+  return {
+    baseModel: resolvedBaseModel ?? inferBaseModel(ggufRepo),
+    ggufRepo: normalizeRepoInput(ggufRepo)
+  };
+}
+
+export function resolveTextConfig(configData) {
+  if (configData?.text_config && typeof configData.text_config === 'object') {
+    return {
+      ...configData,
+      ...configData.text_config
+    };
+  }
+
+  return configData;
+}
+
+function getPositiveInt(value) {
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
+
+export function extractMaxContextLength(configData) {
+  const candidateKeys = [
+    'max_position_embeddings',
+    'max_sequence_length',
+    'model_max_length',
+    'max_seq_len',
+    'max_context_length',
+    'seq_len',
+    'n_positions'
+  ];
+
+  const candidates = candidateKeys
+    .map((key) => getPositiveInt(configData[key]))
+    .filter(Boolean);
+
+  const ropeScaling = configData.rope_scaling;
+
+  if (ropeScaling && typeof ropeScaling === 'object') {
+    const originalMax = getPositiveInt(ropeScaling.original_max_position_embeddings);
+
+    if (originalMax) {
+      candidates.push(originalMax);
+
+      if (typeof ropeScaling.factor === 'number' && ropeScaling.factor > 0) {
+        candidates.push(Math.ceil(originalMax * ropeScaling.factor));
+      }
+    }
+  }
+
+  return Math.max(...candidates, 4_096);
+}
+
+export function extractParamCountFromIdentifiers(...identifiers) {
+  const matches = [];
+
+  for (const identifier of identifiers) {
+    if (typeof identifier !== 'string') {
+      continue;
+    }
+
+    for (const match of identifier.matchAll(/(?<!\d)(\d+(?:\.\d+)?)B(?![A-Za-z])/gi)) {
+      matches.push(Number(match[1]));
+    }
+  }
+
+  return matches.length ? Math.max(...matches) : null;
+}
+
+export function calculateTotalParams(configData, numLayers, numHeads, headDim, baseModel) {
+  if (typeof configData.num_parameters === 'number' && configData.num_parameters > 0) {
+    return configData.num_parameters / 1e9;
+  }
+
+  if (typeof configData.parameter_count === 'number' && configData.parameter_count > 0) {
+    return configData.parameter_count / 1e9;
+  }
+
+  const inferred = extractParamCountFromIdentifiers(
+    configData.model_name,
+    configData._name_or_path,
+    configData.name,
+    baseModel
+  );
+
+  if (inferred !== null) {
+    return inferred;
+  }
+
+  const hiddenSize = configData.hidden_size ?? headDim * numHeads;
+  const intermediateSize = configData.intermediate_size ?? configData.ffn_hidden_size ?? hiddenSize * 4;
+  const vocabSize = configData.vocab_size ?? 32_000;
+  const paramsPerLayer =
+    numHeads * headDim * headDim * 4 + hiddenSize * intermediateSize * 2 + hiddenSize * 2;
+
+  return (paramsPerLayer * numLayers + hiddenSize * vocabSize) / 1e9;
+}
+
+export function parseQuantizationBits(filename) {
+  const value = filename.toUpperCase();
+
+  if (value.includes('FP32') || value.includes('F32')) {
+    return 32;
+  }
+
+  if (value.includes('FP16') || value.includes('F16')) {
+    return 16;
+  }
+
+  if (value.includes('Q8')) {
+    return 8;
+  }
+
+  if (value.includes('Q6')) {
+    return 6;
+  }
+
+  if (value.includes('Q5')) {
+    return 5;
+  }
+
+  if (value.includes('Q4')) {
+    return 4;
+  }
+
+  if (value.includes('Q3')) {
+    return 3;
+  }
+
+  if (value.includes('Q2')) {
+    return 2;
+  }
+
+  const match = value.match(/(\d+)/);
+  return match ? Number(match[1]) : 0;
+}
+
+export async function fetchQuantizations(ggufRepo, fetchImpl) {
+  const modelInfo = await requestJson(`/api/models/${normalizeRepoInput(ggufRepo)}`, fetchImpl);
+  const siblings = Array.isArray(modelInfo.siblings) ? modelInfo.siblings : [];
+
+  const quantizations = siblings
+    .map((item) => item?.rfilename)
+    .filter((filename) => typeof filename === 'string' && filename.endsWith('.gguf') && !filename.startsWith('.'))
+    .map((filename) => ({ filename, bits: parseQuantizationBits(filename) }))
+    .filter((item) => item.bits > 0);
+
+  return sortQuantizations(quantizations);
+}
+
+export async function fetchModelPayload(baseModel, fetchImpl) {
+  const configData = resolveTextConfig(await requestConfig(baseModel, fetchImpl));
+  const numLayers = configData.num_hidden_layers ?? configData.n_layer ?? configData.hidden_layers ?? 32;
+  const numKvHeads =
+    configData.num_key_value_heads ?? configData.num_attention_heads ?? configData.n_head ?? 32;
+  const headDim =
+    configData.head_dim ??
+    Math.floor((configData.hidden_size ?? configData.n_embd ?? 4_096) / Math.max(numKvHeads, 1));
+  const maxContextLength = extractMaxContextLength(configData);
+  const totalParamsBillions = calculateTotalParams(
+    configData,
+    numLayers,
+    numKvHeads,
+    headDim,
+    baseModel
+  );
+
+  return {
+    modelName: baseModel,
+    totalParamsBillions,
+    numLayers,
+    numKvHeads,
+    headDim,
+    maxContextLength,
+    contexts: getAvailableContexts(maxContextLength)
+  };
+}
+
+export async function resolveModelPayload(repoInput, fetchImpl = fetch) {
+  const { baseModel, ggufRepo } = await resolveBaseModel(repoInput, fetchImpl);
+  const [model, quantizations] = await Promise.all([
+    fetchModelPayload(baseModel, fetchImpl),
+    fetchQuantizations(ggufRepo, fetchImpl)
+  ]);
+
+  if (!quantizations.length) {
+    throw new Error('No GGUF quantizations were found in that repository.');
+  }
+
+  return {
+    ...model,
+    quantizations
+  };
+}
