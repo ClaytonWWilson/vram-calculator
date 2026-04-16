@@ -1,5 +1,6 @@
 import { getAvailableContexts, sortQuantizations } from "$lib/calculator.js";
 import type { ModelInfo } from "../../types/huggingface";
+import { cachedFetch } from "./cachedFetch";
 
 const HF_ORIGIN = "https://huggingface.co";
 const MAX_BASE_MODEL_DEPTH = 10;
@@ -414,7 +415,7 @@ export async function fetchModelPayload(
 
 export async function resolveModelPayload(
   repoInput: string,
-  fetchImpl = fetch,
+  fetchImpl = cachedFetch,
 ) {
   const { baseModel, ggufRepo } = await resolveBaseModel(repoInput, fetchImpl);
   const [model, quantizations] = await Promise.all([

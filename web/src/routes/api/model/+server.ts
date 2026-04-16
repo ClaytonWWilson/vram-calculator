@@ -18,7 +18,7 @@ export type ApiResponse =
       error: ErrorResponse;
     };
 
-export async function POST({ request, fetch }) {
+export async function POST({ request }) {
   let body: any;
 
   try {
@@ -34,7 +34,7 @@ export async function POST({ request, fetch }) {
   }
 
   try {
-    const payload: ModelResponse = await resolveModelPayload(body.repo, fetch);
+    const payload: ModelResponse = await resolveModelPayload(body.repo);
     return json({ success: true, data: payload } satisfies ApiResponse);
   } catch (error) {
     const message =
