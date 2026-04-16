@@ -114,7 +114,6 @@
     <form class="control-card" on:submit|preventDefault={loadModel}>
       <div class="hero-copy">
         <div class="hero-meta">
-          <p class="eyebrow">Theme</p>
           <div class="theme-toggle" role="group" aria-label="Theme preference">
             {#each themeOptions as option}
               <button
@@ -468,16 +467,13 @@
     box-shadow: var(--shadow);
   }
 
-  .hero-copy {
-    padding-top: 1rem;
-  }
-
   .hero-meta {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
     align-items: center;
     margin-bottom: 1rem;
+    float: right;
   }
 
   .hero-title {
@@ -605,6 +601,7 @@
     border: 1px solid var(--line);
     border-radius: 999px;
     background: var(--panel-strong);
+    margin-left: auto;
   }
 
   .theme-toggle button {
