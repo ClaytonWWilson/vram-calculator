@@ -19,6 +19,7 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
+    "@sveltejs/adapter-node": "^5.5.4",
     "katex": "^0.16.45"
   }
 }
