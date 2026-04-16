@@ -254,10 +254,12 @@
               />
               <div class="slider-scale" aria-hidden="true">
                 {#each contexts as context}
-                  <span
-                    class:selected={selectedContext?.tokens === context.tokens}
-                    >{context.label}</span
-                  >
+                  <div>
+                    <span
+                      class:selected={selectedContext?.tokens ===
+                        context.tokens}>{context.label}</span
+                    >
+                  </div>
                 {/each}
               </div>
             </div>
@@ -749,6 +751,8 @@
   .context-slider {
     padding: 0;
     accent-color: var(--accent);
+    width: 96%;
+    margin-left: 2%;
   }
 
   .slider-scale {
@@ -897,5 +901,12 @@
     .slider-scale {
       flex-wrap: wrap;
     }
+  }
+
+  .slider-scale > div {
+    width: 35px;
+    text-align: center;
+    overflow: hidden;
+    /* text-anchor: middle; */
   }
 </style>
