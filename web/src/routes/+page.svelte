@@ -436,6 +436,7 @@
             <Formula
               expression={"\\mathrm{vram\\_used\\_gb} = \\min(\\mathrm{total\\_needed\\_gb}, \\mathrm{vram\\_total\\_gb})"}
             />
+            <br />
             <Formula
               expression={"\\mathrm{ram\\_used\\_gb} = \\max(0, \\mathrm{total\\_needed\\_gb} - \\mathrm{vram\\_used\\_gb})"}
             />
