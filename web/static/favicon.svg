@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Dark theme accent gradient -->
+    <linearGradient id="neural-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f09f60;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#d07d45;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#bb6c33;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background (dark theme bg color, can be transparent) -->
+  <rect width="64" height="64" fill="#131516" rx="8"/>
+  
+  <!-- Neural network connections (subtle lines) -->
+  <line x1="20" y1="20" x2="44" y2="20" stroke="url(#neural-grad)" stroke-width="1.5" opacity="0.4"/>
+  <line x1="20" y1="20" x2="32" y2="44" stroke="url(#neural-grad)" stroke-width="1.5" opacity="0.4"/>
+  <line x1="44" y1="20" x2="32" y2="44" stroke="url(#neural-grad)" stroke-width="1.5" opacity="0.4"/>
+  
+  <!-- Brain/Neuron nodes -->
+  <circle cx="20" cy="20" r="6" fill="#f09f60"/>
+  <circle cx="44" cy="20" r="5" fill="url(#neural-grad)" opacity="0.8"/>
+  <circle cx="32" cy="44" r="7" fill="#d07d45"/>
+  
+  <!-- Inner glow on main nodes -->
+  <circle cx="20" cy="20" r="2.5" fill="#f2ede3" opacity="0.6"/>
+  <circle cx="32" cy="44" r="3" fill="#f2ede3" opacity="0.4"/>
+</svg>
