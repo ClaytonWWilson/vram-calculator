@@ -158,7 +158,6 @@
           Load a Hugging Face GGUF repo, choose context size and quantization,
           and see if you can load it on your system.
         </p>
-        <p class="theme-caption">Current appearance: {$resolvedTheme}</p>
       </div>
       <div class="field-grid">
         <label class="field field-wide">
