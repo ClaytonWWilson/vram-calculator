@@ -43,7 +43,7 @@ export function normalizeRepoInput(input: string) {
   return `${parts[0]}/${parts[1]}`;
 }
 
-async function requestJson(path, fetchImpl) {
+async function requestJson(path: string, fetchImpl: typeof fetch) {
   const response = await fetchImpl(`${HF_ORIGIN}${path}`, {
     headers: {
       accept: "application/json",
@@ -57,13 +57,7 @@ async function requestJson(path, fetchImpl) {
   return response.json();
 }
 
-async function requestConfig(
-  repo: string,
-  fetchImpl: (
-    input: URL | RequestInfo,
-    init?: RequestInit,
-  ) => Promise<Response>,
-) {
+async function requestConfig(repo: string, fetchImpl: typeof fetch) {
   const response = await fetchImpl(
     `${HF_ORIGIN}/${repo}/resolve/main/config.json`,
     {
@@ -80,7 +74,7 @@ async function requestConfig(
   return response.json();
 }
 
-export function inferOwnerFromModel(modelName) {
+export function inferOwnerFromModel(modelName: string) {
   const value = modelName.toLowerCase();
 
   if (value.includes("llama")) {
@@ -110,7 +104,7 @@ export function inferOwnerFromModel(modelName) {
   return "meta-llama";
 }
 
-export function inferBaseModel(repo) {
+export function inferBaseModel(repo: string) {
   const [owner, name] = normalizeRepoInput(repo).split("/");
   const baseRepo = name.replace(/-GGUF$/i, "");
   const inferredOwner = new Set([
@@ -140,7 +134,10 @@ function getBaseModels(modelInfo) {
   return [];
 }
 
-export async function resolveBaseModel(ggufRepo: string, fetchImpl) {
+export async function resolveBaseModel(
+  ggufRepo: string,
+  fetchImpl: typeof fetch,
+) {
   let currentRepo = normalizeRepoInput(ggufRepo);
   let resolvedBaseModel: string | null = null;
   const visited = new Set();
@@ -189,7 +186,7 @@ export function flattenTextConfig(configData: any) {
   return configData;
 }
 
-function getPositiveInt(value) {
+function getPositiveInt(value: any): number | null {
   return Number.isInteger(value) && value > 0 ? value : null;
 }
 
@@ -291,7 +288,7 @@ export function calculateTotalParams(
   return (paramsPerLayer * numLayers + hiddenSize * vocabSize) / 1e9;
 }
 
-export function parseQuantizationBits(filename) {
+export function parseQuantizationBits(filename: string) {
   const value = filename.toUpperCase();
 
   if (value.includes("FP32") || value.includes("F32")) {
@@ -332,10 +329,7 @@ export function parseQuantizationBits(filename) {
 
 export async function fetchQuantizations(
   ggufRepo: string,
-  fetchImpl: (
-    input: URL | RequestInfo,
-    init?: RequestInit,
-  ) => Promise<Response>,
+  fetchImpl: typeof fetch,
 ) {
   const modelInfo: ModelInfo = await requestJson(
     `/api/models/${normalizeRepoInput(ggufRepo)}`,
@@ -360,10 +354,7 @@ export async function fetchQuantizations(
 
 export async function fetchModelPayload(
   baseModel: string,
-  fetchImpl: (
-    input: URL | RequestInfo,
-    init?: RequestInit,
-  ) => Promise<Response>,
+  fetchImpl: typeof fetch,
 ) {
   const configData = await requestConfig(baseModel, fetchImpl);
 
