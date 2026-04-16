@@ -281,8 +281,10 @@
           <div class="panel-heading">
             <p class="eyebrow">Estimate</p>
             <h2>
-              {#if estimate.fits}
-                Fits within system capacity
+              {#if estimate.fits && estimate.vramUtilization < 100}
+                Fits within VRAM
+              {:else if estimate.fits && estimate.vramUtilization >= 100}
+                Fits within system capacity. Expect reduced performance.
               {:else}
                 Capacity shortfall detected
               {/if}
