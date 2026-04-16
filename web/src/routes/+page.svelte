@@ -86,11 +86,11 @@
     }
   }
 
-  function formatGb(value) {
+  function formatGb(value: number) {
     return `${value.toFixed(2)} GB`;
   }
 
-  function formatPercent(value) {
+  function formatPercent(value: number) {
     return `${Math.min(value, 100).toFixed(1)}%`;
   }
 
