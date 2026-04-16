@@ -516,13 +516,6 @@
     color: var(--muted);
   }
 
-  .theme-caption {
-    margin-top: 0.9rem;
-    color: var(--muted);
-    font-size: 0.9rem;
-    text-transform: capitalize;
-  }
-
   .panel,
   .control-card {
     backdrop-filter: blur(18px);
