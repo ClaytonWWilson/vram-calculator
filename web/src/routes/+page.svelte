@@ -1,6 +1,12 @@
 <script lang="ts">
   import Formula from "$lib/Formula.svelte";
   import { calculateEstimate, formatQuantizationLabel } from "$lib/calculator";
+  import {
+    resolvedTheme,
+    setThemePreference,
+    themePreference,
+    type ThemePreference,
+  } from "$lib/theme";
   import type { ApiResponse, ModelResponse } from "./api/model/+server";
 
   let repoInput = "unsloth/Qwen3.5-4B-GGUF";
@@ -87,6 +93,12 @@
   function formatPercent(value) {
     return `${Math.min(value, 100).toFixed(1)}%`;
   }
+
+  const themeOptions: { label: string; value: ThemePreference }[] = [
+    { label: "System", value: "system" },
+    { label: "Light", value: "light" },
+    { label: "Dark", value: "dark" },
+  ];
 </script>
 
 <svelte:head>
@@ -101,11 +113,53 @@
   <section class="hero">
     <form class="control-card" on:submit|preventDefault={loadModel}>
       <div class="hero-copy">
+        <div class="hero-meta">
+          <p class="eyebrow">Theme</p>
+          <div class="theme-toggle" role="group" aria-label="Theme preference">
+            {#each themeOptions as option}
+              <button
+                class:selected={$themePreference === option.value}
+                type="button"
+                title={option.label}
+                aria-label={option.label}
+                aria-pressed={$themePreference === option.value}
+                on:click={() => setThemePreference(option.value)}
+              >
+                {#if option.value === "system"}
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="4.5" y="5.5" width="15" height="10" rx="2" />
+                    <path d="M9 18.5h6" />
+                    <path d="M12 15.5v3" />
+                  </svg>
+                {:else if option.value === "light"}
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2.5v3" />
+                    <path d="M12 18.5v3" />
+                    <path d="M21.5 12h-3" />
+                    <path d="M5.5 12h-3" />
+                    <path d="M18.7 5.3l-2.1 2.1" />
+                    <path d="M7.4 16.6l-2.1 2.1" />
+                    <path d="M18.7 18.7l-2.1-2.1" />
+                    <path d="M7.4 7.4L5.3 5.3" />
+                  </svg>
+                {:else}
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M15.5 3.5a7.8 7.8 0 1 0 5 13.8A8.8 8.8 0 1 1 15.5 3.5Z"
+                    />
+                  </svg>
+                {/if}
+              </button>
+            {/each}
+          </div>
+        </div>
         <h1 class="hero-title">GGUF Fit Estimator</h1>
         <p class="lede">
           Load a Hugging Face GGUF repo, choose context size and quantization,
           and see if you can load it on your system.
         </p>
+        <p class="theme-caption">Current appearance: {$resolvedTheme}</p>
       </div>
       <div class="field-grid">
         <label class="field field-wide">
@@ -417,6 +471,14 @@
     padding-top: 1rem;
   }
 
+  .hero-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
   .hero-title {
     max-width: none;
     margin-bottom: 1rem;
@@ -452,6 +514,13 @@
     font-size: 1.05rem;
     line-height: 1.6;
     color: var(--muted);
+  }
+
+  .theme-caption {
+    margin-top: 0.9rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-transform: capitalize;
   }
 
   .panel,
@@ -517,10 +586,57 @@
   select {
     width: 100%;
     padding: 0.95rem 1rem;
-    border: 1px solid rgba(67, 52, 29, 0.18);
+    border: 1px solid var(--field-border);
     border-radius: 16px;
-    background: rgba(255, 252, 247, 0.92);
+    background: var(--field-bg);
     color: var(--ink);
+  }
+
+  .theme-toggle {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding: 0.35rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--panel-strong);
+  }
+
+  .theme-toggle button {
+    border: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    padding: 0;
+    background: transparent;
+    color: var(--muted);
+    transition:
+      background 140ms ease,
+      color 140ms ease,
+      transform 140ms ease;
+  }
+
+  .theme-toggle button:hover {
+    transform: translateY(-1px);
+    color: var(--ink);
+  }
+
+  .theme-toggle button.selected {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .theme-toggle svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .actions {
@@ -535,7 +651,7 @@
     border: none;
     border-radius: 999px;
     padding: 0.95rem 1.4rem;
-    background: linear-gradient(135deg, #ac4f1f, #d2732f);
+    background: var(--accent-gradient);
     color: white;
     font-weight: 700;
   }
@@ -604,9 +720,9 @@
 
   .slider-shell {
     padding: 1rem 1rem 0.85rem;
-    border: 1px solid rgba(67, 52, 29, 0.12);
+    border: 1px solid var(--field-border);
     border-radius: 22px;
-    background: rgba(255, 252, 247, 0.9);
+    background: var(--field-bg);
   }
 
   .slider-header {
@@ -654,7 +770,7 @@
     padding: 1rem;
     border-radius: 20px;
     background: var(--panel-strong);
-    border: 1px solid rgba(67, 52, 29, 0.08);
+    border: 1px solid var(--surface-border);
   }
 
   .meter-stack + .meter-stack {
@@ -672,21 +788,21 @@
     overflow: hidden;
     height: 14px;
     border-radius: 999px;
-    background: rgba(48, 98, 72, 0.12);
+    background: var(--track-cool);
   }
 
   .meter-track.soft {
-    background: rgba(164, 71, 24, 0.1);
+    background: var(--track-warm);
   }
 
   .meter-fill {
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, #2b6a47, #5c9c72);
+    background: var(--fill-cool);
   }
 
   .meter-fill.warm {
-    background: linear-gradient(90deg, #b95f24, #de934f);
+    background: var(--fill-warm);
   }
 
   .notes {
@@ -724,7 +840,7 @@
     padding: 0.85rem 1rem;
     border-radius: 16px;
     background: var(--panel-strong);
-    border: 1px solid rgba(67, 52, 29, 0.08);
+    border: 1px solid var(--surface-border);
   }
 
   .formula-block :global(.katex) {
@@ -766,6 +882,7 @@
       grid-column: auto;
     }
 
+    .hero-meta,
     .slider-header,
     .actions,
     .meter-label {

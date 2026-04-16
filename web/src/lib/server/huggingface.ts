@@ -377,24 +377,24 @@ export async function fetchModelPayload(
   );
   const numKvHeads = parseInt(
     String(
-      configData.num_key_value_heads ??
-        configData.num_attention_heads ??
-        configData.n_head ??
+      textConfig.num_key_value_heads ??
+        textConfig.num_attention_heads ??
+        textConfig.n_head ??
         32,
     ),
   );
   const headDim = parseInt(
     String(
-      configData.head_dim ??
+      textConfig.head_dim ??
         Math.floor(
-          (configData.hidden_size ?? configData.n_embd ?? 4_096) /
+          (textConfig.hidden_size ?? textConfig.n_embd ?? 4_096) /
             Math.max(numKvHeads, 1),
         ),
     ),
   );
-  const maxContextLength = extractMaxContextLength(configData);
+  const maxContextLength = extractMaxContextLength(textConfig);
   const totalParamsBillions = calculateTotalParams(
-    configData,
+    textConfig,
     numLayers,
     numKvHeads,
     headDim,

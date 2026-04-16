@@ -11,12 +11,46 @@
   --good: #226442;
   --warn: #8a2d16;
   --shadow: 0 24px 80px rgba(80, 54, 25, 0.12);
-  font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
-  color: var(--ink);
-  background:
+  --field-bg: rgba(255, 252, 247, 0.92);
+  --field-border: rgba(67, 52, 29, 0.18);
+  --surface-border: rgba(67, 52, 29, 0.08);
+  --track-cool: rgba(48, 98, 72, 0.12);
+  --track-warm: rgba(164, 71, 24, 0.1);
+  --fill-cool: linear-gradient(90deg, #2b6a47, #5c9c72);
+  --fill-warm: linear-gradient(90deg, #b95f24, #de934f);
+  --accent-gradient: linear-gradient(135deg, #ac4f1f, #d2732f);
+  --page-background:
     radial-gradient(circle at top left, rgba(232, 163, 88, 0.25), transparent 34%),
     radial-gradient(circle at top right, rgba(110, 145, 90, 0.18), transparent 26%),
     linear-gradient(180deg, #fbf7ef 0%, var(--bg) 52%, #e9dcc7 100%);
+  font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+:root[data-theme="dark"] {
+  --bg: #131516;
+  --bg-strong: #1a1d1f;
+  --panel: rgba(20, 24, 26, 0.82);
+  --panel-strong: rgba(25, 30, 32, 0.94);
+  --ink: #f2ede3;
+  --muted: #b7ab98;
+  --line: rgba(237, 220, 189, 0.12);
+  --accent: #f09f60;
+  --accent-soft: rgba(240, 159, 96, 0.12);
+  --good: #86d2a4;
+  --warn: #ff9b82;
+  --shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+  --field-bg: rgba(29, 35, 37, 0.92);
+  --field-border: rgba(237, 220, 189, 0.14);
+  --surface-border: rgba(237, 220, 189, 0.08);
+  --track-cool: rgba(104, 173, 131, 0.18);
+  --track-warm: rgba(240, 159, 96, 0.14);
+  --fill-cool: linear-gradient(90deg, #3e8a5f, #83c89d);
+  --fill-warm: linear-gradient(90deg, #d07d45, #f0ad71);
+  --accent-gradient: linear-gradient(135deg, #bb6c33, #f0a263);
+  --page-background:
+    radial-gradient(circle at top left, rgba(185, 108, 51, 0.18), transparent 34%),
+    radial-gradient(circle at top right, rgba(83, 130, 110, 0.15), transparent 26%),
+    linear-gradient(180deg, #101214 0%, var(--bg) 52%, #191d1f 100%);
 }
 
 html,
@@ -27,6 +61,11 @@ body {
 
 body {
   min-height: 100vh;
+  color: var(--ink);
+  background: var(--page-background);
+  transition:
+    background 180ms ease,
+    color 180ms ease;
 }
 
 * {
