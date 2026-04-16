@@ -1,5 +1,7 @@
 # LLM VRAM/RAM Calculator
 
+View it live at https://vram-calculator-prod-production.up.railway.app/
+
 This repo now contains two interfaces for the same estimator:
 
 - `cli/`: the original Python terminal UI
