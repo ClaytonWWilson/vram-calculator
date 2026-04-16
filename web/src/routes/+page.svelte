@@ -583,6 +583,10 @@
     }
   }
 
+  .context-quant > select {
+    font-size: 16pt;
+  }
+
   input,
   select {
     width: 100%;
