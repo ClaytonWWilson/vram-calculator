@@ -1,4 +1,5 @@
 const CACHE_DURATION_MS = 15 * 60 * 1000;
+const MAX_CACHE_ITEMS = 100;
 
 type CacheItem = {
   path: string;
@@ -75,6 +76,18 @@ export async function cachedFetch(
     timestamp: new Date(),
     response: response.clone(),
   };
+
+  // Prevent memory leak
+  if (timeStampCache.length >= MAX_CACHE_ITEMS) {
+    const oldestItems = timeStampCache.splice(
+      0,
+      timeStampCache.length - MAX_CACHE_ITEMS,
+    );
+
+    for (const item of oldestItems) {
+      pathCache.delete(item.path);
+    }
+  }
 
   pathCache.set(key, cacheItem);
   timeStampCache.push(cacheItem);
