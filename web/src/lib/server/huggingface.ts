@@ -9,7 +9,9 @@ export function normalizeRepoInput(input: string) {
   const value = input.trim().replace(/\/+$/, "");
 
   if (!value) {
-    throw new Error("A Hugging Face GGUF repository is required. Format: owner/repo-name.");
+    throw new Error(
+      "A Hugging Face GGUF repository is required. Format: owner/repo-name.",
+    );
   }
 
   if (value.includes("://")) {
@@ -18,7 +20,9 @@ export function normalizeRepoInput(input: string) {
     try {
       url = new URL(value);
     } catch {
-      throw new Error(`Invalid URL format: "${input}". Please provide a valid Hugging Face repo URL.`);
+      throw new Error(
+        `Invalid URL format: "${input}". Please provide a valid Hugging Face repo URL.`,
+      );
     }
 
     if (!url.hostname.endsWith("huggingface.co")) {
@@ -58,10 +62,8 @@ async function requestJson(path: string, fetchImpl: typeof fetch) {
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch ${url}: HTTP ${response.status}. Check that the repository exists and is accessible.`,
+      `Failed to fetch ${path}: HTTP ${response.status}. Check that the repository exists and is accessible.`,
     );
-  }
-
   }
 
   return response.json();
@@ -81,7 +83,6 @@ async function requestConfig(repo: string, fetchImpl: typeof fetch) {
     throw new Error(
       `Failed to fetch config.json for ${repo}: HTTP ${response.status}. The repository may not exist or config.json may be missing.`,
     );
-  }
   }
 
   return response.json();
@@ -396,11 +397,7 @@ export async function fetchModelPayload(
   // Fix: headDim should be calculated using num_attention_heads, not num_kv_heads (Issue #9)
   // For GQA models (like Llama 3, Gemma), these are different
   const numAttnHeads = parseInt(
-    String(
-      textConfig.num_attention_heads ??
-        textConfig.n_head ??
-        numKvHeads,
-    ),
+    String(textConfig.num_attention_heads ?? textConfig.n_head ?? numKvHeads),
   );
   const headDim = parseInt(
     String(
