@@ -375,12 +375,21 @@ export async function fetchModelPayload(
         32,
     ),
   );
+  // Fix: headDim should be calculated using num_attention_heads, not num_kv_heads (Issue #9)
+  // For GQA models (like Llama 3, Gemma), these are different
+  const numAttnHeads = parseInt(
+    String(
+      textConfig.num_attention_heads ??
+        textConfig.n_head ??
+        numKvHeads,
+    ),
+  );
   const headDim = parseInt(
     String(
       textConfig.head_dim ??
         Math.floor(
           (textConfig.hidden_size ?? textConfig.n_embd ?? 4_096) /
-            Math.max(numKvHeads, 1),
+            Math.max(numAttnHeads, 1),
         ),
     ),
   );
