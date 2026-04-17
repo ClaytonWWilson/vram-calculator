@@ -9,7 +9,7 @@ export function normalizeRepoInput(input: string) {
   const value = input.trim().replace(/\/+$/, "");
 
   if (!value) {
-    throw new Error("Enter a Hugging Face GGUF repo.");
+    throw new Error("A Hugging Face GGUF repository is required. Format: owner/repo-name.");
   }
 
   if (value.includes("://")) {
@@ -18,17 +18,21 @@ export function normalizeRepoInput(input: string) {
     try {
       url = new URL(value);
     } catch {
-      throw new Error("Enter a valid Hugging Face repo URL.");
+      throw new Error(`Invalid URL format: "${input}". Please provide a valid Hugging Face repo URL.`);
     }
 
     if (!url.hostname.endsWith("huggingface.co")) {
-      throw new Error("Only Hugging Face model URLs are supported.");
+      throw new Error(
+        `Only Hugging Face model URLs are supported. Got hostname: ${url.hostname}.`,
+      );
     }
 
     const parts = url.pathname.split("/").filter(Boolean);
 
     if (parts.length < 2) {
-      throw new Error("Expected a Hugging Face repo in owner/repo form.");
+      throw new Error(
+        `Invalid repository path in URL. Expected owner/repo format, got: ${url.pathname}`,
+      );
     }
 
     return `${parts[0]}/${parts[1]}`;
@@ -37,7 +41,9 @@ export function normalizeRepoInput(input: string) {
   const parts = value.split("/").filter(Boolean);
 
   if (parts.length !== 2) {
-    throw new Error("Expected a Hugging Face repo in owner/repo form.");
+    throw new Error(
+      `Invalid repository format: "${input}". Expected owner/repo-name format (e.g., meta-llama/Llama-3-GGUF).`,
+    );
   }
 
   return `${parts[0]}/${parts[1]}`;
@@ -51,7 +57,11 @@ async function requestJson(path: string, fetchImpl: typeof fetch) {
   });
 
   if (!response.ok) {
-    throw new Error(`Hugging Face request failed (${response.status}).`);
+    throw new Error(
+      `Failed to fetch ${url}: HTTP ${response.status}. Check that the repository exists and is accessible.`,
+    );
+  }
+
   }
 
   return response.json();
@@ -68,7 +78,10 @@ async function requestConfig(repo: string, fetchImpl: typeof fetch) {
   );
 
   if (!response.ok) {
-    throw new Error(`Could not fetch config.json for ${repo}.`);
+    throw new Error(
+      `Failed to fetch config.json for ${repo}: HTTP ${response.status}. The repository may not exist or config.json may be missing.`,
+    );
+  }
   }
 
   return response.json();
