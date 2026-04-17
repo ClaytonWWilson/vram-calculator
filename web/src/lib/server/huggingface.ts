@@ -187,8 +187,13 @@ export async function resolveBaseModel(
 }
 
 export function flattenTextConfig(configData: any) {
-  //Text config data is inside a text_config key
-  if (configData?.text_config && typeof configData.text_config === "object") {
+  // Return empty object if configData is null/undefined or not an object (Issue #15)
+  if (!configData || typeof configData !== "object") {
+    return {};
+  }
+
+  // Text config data is inside a text_config key
+  if (configData.text_config && typeof configData.text_config === "object") {
     return {
       ...configData,
       ...configData.text_config,
