@@ -409,13 +409,36 @@ export async function resolveModelPayload(
   fetchImpl = cachedFetch,
 ) {
   const { baseModel, ggufRepo } = await resolveBaseModel(repoInput, fetchImpl);
-  const [model, quantizations] = await Promise.all([
+
+  // Use Promise.allSettled to handle each promise separately and preserve error context (Issue #6)
+  const [modelResult, quantResult] = await Promise.allSettled([
     fetchModelPayload(baseModel, fetchImpl),
     fetchQuantizations(ggufRepo, fetchImpl),
   ]);
 
+  // Handle model payload errors first (more critical)
+  if (modelResult.status === "rejected") {
+    const error = modelResult.reason;
+    throw new Error(
+      `Failed to fetch model metadata for ${baseModel}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  // Handle quantization errors
+  if (quantResult.status === "rejected") {
+    const error = quantResult.reason;
+    throw new Error(
+      `Failed to fetch quantizations for ${ggufRepo}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  const model = modelResult.value;
+  const quantizations = quantResult.value;
+
   if (!quantizations.length) {
-    throw new Error("No GGUF quantizations were found in that repository.");
+    throw new Error(
+      `No GGUF quantizations were found in repository ${ggufRepo}. Please verify the repository contains .gguf files.`,
+    );
   }
 
   return {
