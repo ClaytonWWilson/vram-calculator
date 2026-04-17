@@ -247,7 +247,7 @@ export function calculateTotalParams(
   numLayers,
   numHeads,
   headDim,
-  baseModel,
+  ggufRepoName, // Renamed from 'baseModel' for clarity - this is the GGUF repo name (Issue #14)
 ) {
   if (
     typeof configData.num_parameters === "number" &&
@@ -267,7 +267,7 @@ export function calculateTotalParams(
     configData.model_name,
     configData._name_or_path,
     configData.name,
-    baseModel,
+    ggufRepoName,
   );
 
   if (inferred !== null) {
