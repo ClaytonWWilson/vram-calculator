@@ -33,6 +33,17 @@ export async function POST({ request }) {
     );
   }
 
+  // Validate required 'repo' field exists and is a string (Issue #3)
+  if (!body?.repo || typeof body.repo !== "string") {
+    return json(
+      {
+        success: false,
+        error: { message: 'Field "repo" is required and must be a non-empty string.' },
+      } satisfies ApiResponse,
+      { status: 400 },
+    );
+  }
+
   try {
     const payload: ModelResponse = await resolveModelPayload(body.repo);
     return json({ success: true, data: payload } satisfies ApiResponse);
