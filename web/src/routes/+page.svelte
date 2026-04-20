@@ -895,7 +895,7 @@
     }
 
     .formula-block :global(.katex) {
-      font-size: 0.78rem;
+      font-size: 0.68rem;
     }
   }
 
