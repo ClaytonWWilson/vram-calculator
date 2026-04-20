@@ -893,6 +893,10 @@
     .slider-scale {
       flex-wrap: wrap;
     }
+
+    .formula-block :global(.katex) {
+      font-size: 0.78rem;
+    }
   }
 
   .slider-scale > div {
